@@ -1,0 +1,87 @@
+{
+  "config": "TfidfVectorizer (1, 3) + LogisticRegression",
+  "n_test": 1258,
+  "test_accuracy": 0.753577106518283,
+  "test_macro_f1": 0.6130173818113084,
+  "test_report": {
+    "Negative": {
+      "precision": 0.7661538461538462,
+      "recall": 0.8137254901960784,
+      "f1-score": 0.7892234548335975,
+      "support": 612.0
+    },
+    "Neutral": {
+      "precision": 0.16666666666666666,
+      "recall": 0.20161290322580644,
+      "f1-score": 0.18248175182481752,
+      "support": 124.0
+    },
+    "Positive": {
+      "precision": 0.9279475982532751,
+      "recall": 0.814176245210728,
+      "f1-score": 0.8673469387755102,
+      "support": 522.0
+    },
+    "accuracy": 0.753577106518283,
+    "macro avg": {
+      "precision": 0.620256037024596,
+      "recall": 0.6098382128775376,
+      "f1-score": 0.6130173818113084,
+      "support": 1258.0
+    },
+    "weighted avg": {
+      "precision": 0.7741983042933467,
+      "recall": 0.753577106518283,
+      "f1-score": 0.7618343351552108,
+      "support": 1258.0
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "Negative",
+      "Neutral",
+      "Positive"
+    ],
+    "matrix": [
+      [
+        498,
+        94,
+        20
+      ],
+      [
+        86,
+        25,
+        13
+      ],
+      [
+        66,
+        31,
+        425
+      ]
+    ]
+  },
+  "majority_baseline": {
+    "label": "Negative",
+    "accuracy": 0.4864864864864865
+  },
+  "short_vs_long_accuracy": {
+    "short": {
+      "n": 232,
+      "accuracy": 0.875
+    },
+    "long": {
+      "n": 1026,
+      "accuracy": 0.7261208576998051
+    }
+  },
+  "seen_in_train_accuracy": {
+    "seen": {
+      "n": 0,
+      "accuracy": null
+    },
+    "unseen": {
+      "n": 1258,
+      "accuracy": 0.753577106518283
+    }
+  }
+}

@@ -31,15 +31,18 @@ Kaggle [`bwandowando/food-panda-restaurant-reviews`](https://www.kaggle.com/data
 
 Put the three CSVs in `data/raw/`. This folder is read-only, and no script writes
 to it. If it is empty, the scripts read Kaggle's cached copy through `kagglehub`.
-Everything generated goes to `output/`.
+Everything generated goes to `output/`, one subfolder per step (`02_dataset/`, `03_split/`, `04_training/`, `05_evaluation/`, `06_complaints/`).
 
 ## Run order
 ```
 pip install -r requirements.txt
 python 01_inspect_data.py        # shape, missing values, duplicates, ratings, language mix
-python 02_build_dataset.py       # Jollibee filter, labels, short / rider-blamed flags
-python 03_split.py               # stratified 80/20 split, class balance
-python 04_train_experiments.py   # 29-row CV grid incl. word+char TF-IDF and baselines (~2 min)
+python 02_build_dataset.py       # Jollibee filter, labels, drop Bisaya + near-duplicate spam, flags
+python 02b_label_check.py        # 1st run: writes a 99-review sheet to label by hand;
+                                 # run again once filled: agreement + Cohen's kappa
+python 03_split.py               # stratified 80/20 split, identical texts kept on one side
+python 04_train_experiments.py   # 24-config proposed grid (+3 extra word+char, AFINN, majority)
+                                 # final model = best macro-F1 of the 24 (~2 min)
 python 05_evaluate.py            # held-out test metrics
 python 06_extract_complaints.py  # complaint terms, themes, branch priorities
 ```
@@ -47,5 +50,5 @@ Each script reads only what the previous ones wrote to `output/`, and ends by
 printing the numbers to present. All constants and paths are set in `config.py`.
 `text_prep.py` is the only preprocessing module.
 
-`dashboard/app.py` (Streamlit) is not part of the midterm and has been left
-unchanged. It reads from `dashboard/output/`, not `output/`.
+The Streamlit dashboard is parked outside the project (`../Elect4-sentimenAnalysis_parked/dashboard/`)
+until the visualization phase; this phase covers the analysis process only.

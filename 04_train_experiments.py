@@ -1,18 +1,21 @@
-"""Step 04 - model experiments with stratified 5-fold CV on the TRAINING set.
+"""Step 04 - model experiments with stratified, text-grouped 5-fold CV on the TRAINING set.
 
 Candidates, all scored on the same folds:
-  * 2 vectorizers x 4 n-gram ranges x 3 models   (grid from train_grid.py)
-  * word+char TF-IDF x 3 models                  (features and model settings
+  * 2 vectorizers x 4 n-gram ranges x 3 models   (the proposal's 24-config grid)
+  * word+char TF-IDF x 3 models                  (extra experiment, reported only;
                                                   from Train_Sentiment.py)
   * AFINN lexicon baseline                       (train_grid.py)
   * majority-class baseline
 Every vectorizer lives inside the Pipeline and is rebuilt for every fold, so
-vocabulary and IDF are learned from the training fold only.
+vocabulary and IDF are learned from the training fold only. Identical texts
+stay in the same fold. Scores: macro-F1, macro precision/recall, accuracy,
+per-class F1.
 
-The best non-baseline row by macro-F1 is refitted on all training data.
+The best row of the proposed 24-config grid by macro-F1 is refitted on all
+training data.
 The test set is not touched here; 05_evaluate.py scores it once.
 
-Outputs: output/cv_results.csv, output/best_model.joblib, output/best_config.json
+Outputs: output/04_training/cv_results.csv, best_model.joblib, best_config.json
 Run: python 04_train_experiments.py
 """
 import json
@@ -26,8 +29,8 @@ from afinn import Afinn
 from sklearn.dummy import DummyClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.svm import LinearSVC
@@ -56,6 +59,9 @@ WORD_CHAR_MODELS = {
 AFINN_NAME = "AFINN lexicon (baseline)"
 MAJORITY_NAME = "Majority class (baseline)"
 BASELINES = {AFINN_NAME, MAJORITY_NAME}
+# Word+Char rows go beyond the 24-configuration grid in the proposal: they are
+# scored and reported, but the final model is picked from the proposed grid.
+EXTRA_NOTE = "extra experiment (outside the proposed 24-configuration grid)"
 AFINN_NOTE = ("AFINN is an English-only lexicon; Tagalog/Bisaya/Taglish words "
               "are unknown to it, so it under-performs on this dataset.")
 
@@ -107,6 +113,10 @@ def fold_scores(y_true, y_pred):
     per_class = f1_score(y_true, y_pred, labels=LABELS, average=None, zero_division=0)
     return {
         "macro_f1": f1_score(y_true, y_pred, labels=LABELS, average="macro", zero_division=0),
+        "macro_precision": precision_score(y_true, y_pred, labels=LABELS, average="macro",
+                                           zero_division=0),
+        "macro_recall": recall_score(y_true, y_pred, labels=LABELS, average="macro",
+                                     zero_division=0),
         "accuracy": accuracy_score(y_true, y_pred),
         **{f"f1_{lab.lower()}": s for lab, s in zip(LABELS, per_class)},
     }
@@ -148,7 +158,8 @@ def run_candidates(configs, X, y, folds):
             pipe.fit(X[train_idx], y[train_idx])
             fold_rows.append(fold_scores(y[val_idx], pipe.predict(X[val_idx])))
         row = summarize(name, fold_rows, time.perf_counter() - start, **meta,
-                        note="baseline" if name in BASELINES else "")
+                        note="baseline" if name in BASELINES
+                        else "" if meta["vectorizer"] in VECTORIZERS else EXTRA_NOTE)
         rows.append(row)
         print(f"  [{i:2d}/{total}] {name:<55} macro-F1 "
               f"{row['macro_f1_mean']:.3f} ± {row['macro_f1_std']:.3f}")
@@ -173,7 +184,11 @@ def run_afinn(X, y, folds, total):
 def main():
     train = pd.read_csv(TRAIN_CSV, encoding="utf-8-sig")
     X, y = train["text_clean"].astype(str).to_numpy(), train["sentiment"].to_numpy()
-    folds = list(StratifiedKFold(N_FOLDS, shuffle=True, random_state=SEED).split(X, y))
+    # Grouped by identical text so a repeated review ("good") never sits in both
+    # the training and the validation part of a fold.
+    groups = train["text_key"].fillna("").astype(str).to_numpy()
+    folds = list(StratifiedGroupKFold(N_FOLDS, shuffle=True, random_state=SEED)
+                 .split(X, y, groups=groups))
 
     configs = candidates()
     print(f"Experiments - {len(X):,} training reviews, {N_FOLDS}-fold stratified CV\n")
@@ -183,7 +198,10 @@ def main():
 
     cv = pd.DataFrame(rows).sort_values("macro_f1_mean", ascending=False).reset_index(drop=True)
     cv.insert(0, "rank", range(1, len(cv) + 1))
-    best = cv[~cv["config"].isin(BASELINES)].iloc[0]  # baselines are reference points
+    cv["in_proposed_grid"] = cv["vectorizer"].isin(list(VECTORIZERS))
+    # Final model = best macro-F1 within the proposed grid; baselines and the
+    # extra Word+Char experiments are reference points only.
+    best = cv[cv["in_proposed_grid"]].iloc[0]
     cv["is_best"] = cv["config"] == best["config"]
     cv.to_csv(CV_RESULTS_CSV, index=False)
 
@@ -195,23 +213,31 @@ def main():
         "cv_macro_f1_mean": float(best["macro_f1_mean"]),
         "cv_macro_f1_std": float(best["macro_f1_std"]),
         "cv_accuracy_mean": float(best["accuracy_mean"]),
+        "cv_macro_precision_mean": float(best["macro_precision_mean"]),
+        "cv_macro_recall_mean": float(best["macro_recall_mean"]),
+        "selection": "best macro-F1 within the proposed 24-configuration grid",
         "afinn": {**afinn_stats, "note": AFINN_NOTE},
         "n_train": len(X), "cv_folds": N_FOLDS, "seed": SEED,
     }, indent=2), encoding="utf-8")
 
     line = "=" * 100
     print(f"\n{line}\nNUMBERS TO PRESENT - CROSS-VALIDATION ({N_FOLDS}-fold, sorted by macro-F1)\n{line}")
-    table = cv.rename(columns={"accuracy_mean": "acc", "f1_negative_mean": "F1 neg",
+    table = cv.rename(columns={"accuracy_mean": "acc", "macro_precision_mean": "prec",
+                               "macro_recall_mean": "rec", "f1_negative_mean": "F1 neg",
                                "f1_neutral_mean": "F1 neu", "f1_positive_mean": "F1 pos"})
     table["macro-F1"] = [f"{m:.3f} ± {s:.3f}" for m, s in zip(cv.macro_f1_mean, cv.macro_f1_std)]
-    table["config"] = [c + ("  <-- best" if c == best["config"] else "") for c in table["config"]]
-    print(table[["rank", "config", "macro-F1", "acc", "F1 neg", "F1 neu", "F1 pos"]]
+    table["config"] = [c + ("  <-- best" if c == best["config"]
+                            else "  (extra)" if v == WORD_CHAR else "")
+                       for c, v in zip(table["config"], table["vectorizer"])]
+    print(table[["rank", "config", "macro-F1", "prec", "rec", "acc", "F1 neg", "F1 neu", "F1 pos"]]
           .to_string(index=False, float_format=lambda v: f"{v:.3f}"))
 
     wc = cv[cv["vectorizer"] == WORD_CHAR].iloc[0]
-    print(f"\nBest model: {best['config']}  CV macro-F1 {best['macro_f1_mean']:.3f} "
-          f"± {best['macro_f1_std']:.3f}, CV accuracy {best['accuracy_mean']:.1%}")
-    print(f"Best word+char config: {wc['config']}  (rank {wc['rank']}) "
+    print(f"\nBest model (proposed 24-config grid): {best['config']}  CV macro-F1 "
+          f"{best['macro_f1_mean']:.3f} ± {best['macro_f1_std']:.3f}, precision "
+          f"{best['macro_precision_mean']:.3f}, recall {best['macro_recall_mean']:.3f}, "
+          f"accuracy {best['accuracy_mean']:.1%}")
+    print(f"Best extra word+char config (not selectable): {wc['config']}  (rank {wc['rank']}) "
           f"macro-F1 {wc['macro_f1_mean']:.3f} ± {wc['macro_f1_std']:.3f}")
     print(f"AFINN baseline: {afinn_stats['zero_score_total']:,} of {afinn_stats['n']:,} training "
           f"reviews scored 0 (-> Neutral); {afinn_stats['zero_no_known_words']:,} contain no AFINN word.")

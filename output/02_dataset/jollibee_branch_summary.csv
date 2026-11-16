@@ -1,0 +1,36 @@
+﻿StoreId,Branch,City,n_reviews,n_negative,n_neutral,n_positive,mean_rating,pct_negative,usable
+p8br,Gaisano Grand mall mactan,cebu city,503,200,46,257,3.224652087475149,0.3976143141153082,True
+s0dm,Phoenix Lanang,davao city davao del sur,433,220,39,174,2.8060046189376444,0.5080831408775982,True
+q7ru,Makati Avenue,makati city,401,256,41,104,2.2743142144638404,0.6384039900249376,True
+s5rh,Gil Fernando,marikina,356,119,25,212,3.5308988764044944,0.3342696629213483,True
+s5pd,Lucky Gold Lifehomes,pasig city,309,170,35,104,2.6084142394822005,0.5501618122977346,True
+f8uo,Acacia Lane,mandaluyong city,298,138,34,126,2.9295302013422817,0.46308724832214765,True
+q5zo,Cebu Lapu-lapu,lapu-lapu city cebu,293,165,25,103,2.631399317406143,0.5631399317406144,True
+q9rg,Cebu Basak mactan,lapu-lapu city cebu,278,104,29,145,3.3309352517985613,0.37410071942446044,True
+s6qe,Domestic,pasay city,259,118,25,116,2.9806949806949805,0.4555984555984556,True
+n2gn,Cebu Ayala L3,cebu city,249,136,31,82,2.5903614457831323,0.5461847389558233,True
+m7kk,Koronadal HW DT,koronadal south cotabato,248,106,21,121,3.1653225806451615,0.4274193548387097,True
+q0ey,Cebu Gorordo,cebu city,214,105,20,89,2.892523364485981,0.49065420560747663,True
+r0iu,Edsa Guevarra,mandaluyong city,213,115,35,63,2.5258215962441315,0.539906103286385,True
+r2le,Bocaue Lolomboy,malolos bulacan,212,90,21,101,3.1367924528301887,0.42452830188679247,True
+v5so,Koronadal HW DT2,koronadal south cotabato,208,68,23,117,3.4615384615384617,0.3269230769230769,True
+s6xt,Taft Drive Thru,manila,177,112,22,43,2.2768361581920904,0.632768361581921,True
+z5dp,Ayala Mall Circuit,makati city,165,106,20,39,2.2363636363636363,0.6424242424242425,True
+y7sb,South Park Mall L1 MMMU,muntinlupa city,163,79,21,63,2.8404907975460123,0.48466257668711654,True
+m4dk,Ormoc DT,ormoc leyte,151,64,16,71,3.0927152317880795,0.423841059602649,True
+s6ni,The Mind Museum,taguig city,141,82,20,39,2.397163120567376,0.5815602836879432,True
+q4um,Marikina Bayan,marikina,122,72,4,46,2.6065573770491803,0.5901639344262295,True
+wui0,Davao Magsaysay,davao city davao del sur,114,53,10,51,3.026315789473684,0.4649122807017544,True
+t4de,Puregold E. Rod,quezon city,94,53,9,32,2.606382978723404,0.5638297872340425,True
+t8qx,EDSA Kamias,quezon city,93,62,8,23,2.2688172043010755,0.6666666666666666,True
+hb3e,ML Quezon Taguig,taguig city,92,45,7,40,2.9130434782608696,0.4891304347826087,True
+r8rs,Baliuag 1,malolos bulacan,86,33,2,51,3.4302325581395348,0.38372093023255816,True
+i8ss,Robinsons Valencia,valencia bukidnon,84,39,3,42,3.0833333333333335,0.4642857142857143,True
+k1lr,SM Center Ormoc,ormoc leyte,82,30,4,48,3.4390243902439024,0.36585365853658536,True
+i5mm,Lianas Alabang,muntinlupa city,79,29,4,46,3.3417721518987342,0.3670886075949367,True
+q7og,Greenhills,san juan,58,35,6,17,2.396551724137931,0.603448275862069,True
+m6al,Rockwell Business Center Tower 3,pasig city,48,21,3,24,3.1458333333333335,0.4375,True
+v4sm,SM Center Dagupan,dagupan pangasinan,42,23,5,14,2.5714285714285716,0.5476190476190477,True
+n5yh,Baclaran Bagong Milenyo,pasay city,14,7,1,6,2.9285714285714284,0.5,False
+ywvy,AB Fernandez Reloc,dagupan pangasinan,5,5,0,0,1.0,1.0,False
+u8in,Dragon 8,manila,3,0,1,2,4.333333333333333,0.0,False

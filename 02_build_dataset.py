@@ -1,19 +1,21 @@
 """Step 02 - build the brand dataset (from jolibee_extract.py).
 
-Filter to BRAND, label from stars, flag short and rider-blamed reviews,
+Filter to BRAND, label from stars, drop Bisaya reviews (scope is
+English/Tagalog/Taglish), flag short and rider-blamed reviews,
 flag usable branches, and build the complaint corpus. No split here (03).
 
-Outputs: output/<brand>_all.csv, <brand>_complaints.csv, <brand>_branch_summary.csv
+Outputs (output/02_dataset/): <brand>_all.csv, <brand>_complaints.csv, <brand>_branch_summary.csv
 Run: python 02_build_dataset.py
 """
 import re
 
 import pandas as pd
 
-from config import (ALL_CSV, BRANCH_SUMMARY_CSV, BRAND, COMPLAINTS_CSV, LABELS,
+from config import (ALL_CSV, BISAYA_MARKERS, BRANCH_SUMMARY_CSV, BRAND, COMPLAINTS_CSV, LABELS,
                     MIN_REVIEWS_PER_BRANCH, NEGATIVE_MAX_STAR, NEUTRAL_STAR,
                     RESTOS_FILE, REVIEWS_FILE, RIDER_BLAME_MAX_STAR,
-                    SHORT_REVIEW_WORDS, resolve_raw_dir)
+                    SHORT_REVIEW_WORDS, SPAM_MIN_WORDS, resolve_raw_dir)
+from text_prep import normalize
 
 INVISIBLE = r"[​‌‍‎‏⁠﻿­]"
 
@@ -116,6 +118,29 @@ df = df[df["text_clean"].str.len() > 0].copy()
 
 print(df["sentiment"].value_counts().to_frame("n").assign(pct=lambda d: d.n / d.n.sum()).to_string())
 
+# ----------------------------------------------------------- language scope
+rule("LANGUAGE SCOPE  (drop Bisaya reviews)")
+bisaya_re = r"\b(?:" + "|".join(BISAYA_MARKERS) + r")\b"
+is_bisaya = df["text_clean"].str.contains(bisaya_re, case=False, regex=True)
+n_before_lang = len(df)
+print(f"Bisaya reviews dropped: {is_bisaya.sum():,} of {n_before_lang:,} ({is_bisaya.mean():.1%})")
+print(df[is_bisaya].groupby("City").size().sort_values(ascending=False).head(10)
+      .to_frame("dropped").to_string())
+df = df[~is_bisaya].copy()
+
+# ------------------------------------------------------ near-duplicate spam
+rule("NEAR-DUPLICATE SPAM")
+# Same text after normalisation (case, URLs, repeated letters) and long enough
+# that two customers are unlikely to write it independently. Short generic
+# texts ("good", "no gravy") are real, separate opinions and are kept; 03/04
+# keep identical texts on the same side of every split instead.
+df["text_key"] = df["text_clean"].map(normalize).str.strip()
+spam = (df["word_count"] >= SPAM_MIN_WORDS) & df.duplicated("text_key", keep="first")
+print(f"Repeated texts of >= {SPAM_MIN_WORDS} words dropped as spam: {spam.sum():,}")
+df = df[~spam].copy()
+print(f"Short texts still repeated (kept, grouped at split time): "
+      f"{df.duplicated('text_key').sum():,}")
+
 # ----------------------------------------------------------- branch viability
 rule("BRANCH VIABILITY")
 branch_stats = df.groupby(["StoreId", "Branch", "City"]).agg(
@@ -140,7 +165,7 @@ print(complaints.groupby("Branch").size().sort_values(ascending=False).to_string
 # ---------------------------------------------------------------- write out
 rule("WRITING FILES")
 cols = ["uuid", "StoreId", "Brand", "Branch", "CompleteStoreName", "City", "FoodType",
-        "review_date", "text_raw", "text_clean", "word_count", "is_short",
+        "review_date", "text_raw", "text_clean", "text_key", "word_count", "is_short",
         "rating", "sentiment", "rider_rating", "rider_blamed", "branch_attributable",
         "branch_usable"]
 for path, frame in {ALL_CSV: df[cols], COMPLAINTS_CSV: complaints[cols],
@@ -153,6 +178,9 @@ print(f"{BRAND}: {len(stores)} stores matched, {len(df):,} labelled reviews")
 print(f"Date range {df['review_date'].min().date()} -> {df['review_date'].max().date()}")
 print("Sentiment: " + ", ".join(f"{k} {v:,} ({v / len(df):.1%})"
                                for k, v in df["sentiment"].value_counts().items()))
+print(f"Near-duplicate spam dropped (>= {SPAM_MIN_WORDS} words, repeated text): {int(spam.sum()):,}")
+print(f"Bisaya reviews dropped (scope: English/Tagalog/Taglish): "
+      f"{n_before_lang - len(df):,} of {n_before_lang:,}")
 print(f"Short reviews (<{SHORT_REVIEW_WORDS} words), kept and flagged: "
       f"{df['is_short'].sum():,} ({df['is_short'].mean():.1%})")
 print(f"Rider-blamed reviews: {int(df['rider_blamed'].sum()):,}")

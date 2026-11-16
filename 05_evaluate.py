@@ -1,7 +1,7 @@
 """Step 05 - score the held-out test set once with the model saved by step 04.
 
-Outputs: output/predictions_test.csv (schema the dashboard reads),
-         output/test_metrics.json
+Outputs: output/05_evaluation/predictions_test.csv,
+         output/05_evaluation/test_metrics.json
 Run: python 05_evaluate.py
 """
 import json
@@ -72,8 +72,7 @@ def main():
     print(f"\nShort reviews (<{SHORT_REVIEW_WORDS} words): {correct[short].mean():.1%} accuracy "
           f"on {short.sum():,}")
     print(f"Longer reviews:            {correct[~short].mean():.1%} accuracy on {(~short).sum():,}")
-    print(f"Test text also in train:   {correct[seen].mean():.1%} accuracy on {seen.sum():,}")
-    print(f"Test text not in train:    {correct[~seen].mean():.1%} accuracy on {(~seen).sum():,}")
+    print(f"Test texts also in train:  {seen.sum():,} (split is grouped by identical text)")
     print(f"\nSaved: {PREDICTIONS_CSV.name}, {TEST_METRICS_JSON.name}")
 
 

@@ -29,6 +29,20 @@ LABELS = ["Negative", "Neutral", "Positive"]
 RIDER_BLAME_MAX_STAR = 2    # rider score <= this -> complaint blamed on the rider
 SHORT_REVIEW_WORDS = 3      # fewer words than this -> is_short
 MIN_REVIEWS_PER_BRANCH = 30 # branches below this are flagged, not deleted
+SPAM_MIN_WORDS = 4          # identical texts this long are treated as copy-paste spam
+LABEL_CHECK_N = 100         # reviews sampled for the manual proxy-label check
+
+# ---------------------------------------------------------------- language scope
+# Scope is English/Tagalog/Taglish: a review containing any of these Bisaya-only
+# markers is dropped in step 02. Words shared with Tagalog (wala, ako, pag, sana,
+# salamat, na, pa, ...) are deliberately left out so Tagalog reviews survive.
+BISAYA_MARKERS = [
+    "nindot", "kaayo", "kaayong", "kaau", "kaayu", "daghan", "pud", "gyud", "jud",
+    # akong / nako / maayo were removed: they also occur in Tagalog
+    # ("na akong", "hay nako", "prito ng maayo").
+    "lami", "lamia", "naa", "unsa", "nimo", "dili", "imong", "unya", "bitaw", "walay", "diri", "didto", "dugay", "bugnaw", "gamay",
+    "kuwang", "nganong", "ngano", "karon", "ganahan",
+]
 
 # ---------------------------------------------------------------- model grid (train_grid.py)
 NGRAM_RANGES = [(1, 1), (2, 2), (3, 3), (1, 3)]
@@ -57,21 +71,30 @@ BRANCH_MIN_DF = 2
 BRANCH_NGRAM = (2, 3)
 
 # ---------------------------------------------------------------- output files
+# One subfolder per pipeline step, so each script's outputs stay together.
+DATASET_DIR = OUTPUT_DIR / "02_dataset"
+SPLIT_DIR = OUTPUT_DIR / "03_split"
+TRAINING_DIR = OUTPUT_DIR / "04_training"
+EVALUATION_DIR = OUTPUT_DIR / "05_evaluation"
+COMPLAINTS_DIR = OUTPUT_DIR / "06_complaints"
+for _d in (DATASET_DIR, SPLIT_DIR, TRAINING_DIR, EVALUATION_DIR, COMPLAINTS_DIR):
+    _d.mkdir(exist_ok=True)
+
 _B = BRAND.lower()
-ALL_CSV = OUTPUT_DIR / f"{_B}_all.csv"
-COMPLAINTS_CSV = OUTPUT_DIR / f"{_B}_complaints.csv"
-BRANCH_SUMMARY_CSV = OUTPUT_DIR / f"{_B}_branch_summary.csv"
-TRAIN_CSV = OUTPUT_DIR / f"{_B}_train.csv"
-TEST_CSV = OUTPUT_DIR / f"{_B}_test.csv"
-CV_RESULTS_CSV = OUTPUT_DIR / "cv_results.csv"
-BEST_MODEL_PATH = OUTPUT_DIR / "best_model.joblib"
-BEST_CONFIG_JSON = OUTPUT_DIR / "best_config.json"
-PREDICTIONS_CSV = OUTPUT_DIR / "predictions_test.csv"
-TEST_METRICS_JSON = OUTPUT_DIR / "test_metrics.json"
-TERMS_CHAIN_CSV = OUTPUT_DIR / "complaint_terms_chain.csv"
-TERMS_BRANCH_CSV = OUTPUT_DIR / "complaint_terms_branch.csv"
-THEMES_BRANCH_CSV = OUTPUT_DIR / "complaint_themes_branch.csv"
-BRANCH_PRIORITIES_CSV = OUTPUT_DIR / "branch_priorities.csv"
+ALL_CSV = DATASET_DIR / f"{_B}_all.csv"
+COMPLAINTS_CSV = DATASET_DIR / f"{_B}_complaints.csv"
+BRANCH_SUMMARY_CSV = DATASET_DIR / f"{_B}_branch_summary.csv"
+TRAIN_CSV = SPLIT_DIR / f"{_B}_train.csv"
+TEST_CSV = SPLIT_DIR / f"{_B}_test.csv"
+CV_RESULTS_CSV = TRAINING_DIR / "cv_results.csv"
+BEST_MODEL_PATH = TRAINING_DIR / "best_model.joblib"
+BEST_CONFIG_JSON = TRAINING_DIR / "best_config.json"
+PREDICTIONS_CSV = EVALUATION_DIR / "predictions_test.csv"
+TEST_METRICS_JSON = EVALUATION_DIR / "test_metrics.json"
+TERMS_CHAIN_CSV = COMPLAINTS_DIR / "complaint_terms_chain.csv"
+TERMS_BRANCH_CSV = COMPLAINTS_DIR / "complaint_terms_branch.csv"
+THEMES_BRANCH_CSV = COMPLAINTS_DIR / "complaint_themes_branch.csv"
+BRANCH_PRIORITIES_CSV = COMPLAINTS_DIR / "branch_priorities.csv"
 
 
 def resolve_raw_dir():

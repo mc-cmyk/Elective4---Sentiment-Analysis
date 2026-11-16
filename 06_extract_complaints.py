@@ -3,9 +3,9 @@
 Level 1 - chain-wide term frequency (unigrams to trigrams, min_df=3).
 Level 2 - regex theme tagging, per-branch theme rates and lift vs the chain.
 
-Outputs (written to output/):
+Outputs (written to output/06_complaints/):
   complaint_terms_chain.csv    top 50 complaint terms across the chain
-  complaint_terms_branch.csv   top bigrams/trigrams per branch (dashboard drill-down)
+  complaint_terms_branch.csv   top bigrams/trigrams per branch
   complaint_themes_branch.csv  branch x theme rate, chain rate and lift (long format)
   branch_priorities.csv        each branch's top 2 themes by lift
 
@@ -18,7 +18,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 from config import (BRANCH_MIN_DF, BRANCH_NGRAM, BRANCH_PRIORITIES_CSV, CHAIN_MIN_DF,
                     CHAIN_NGRAM, COMPLAINTS_CSV, MIN_THEME_HITS, NOTABLE_LIFT,
-                    OUTPUT_DIR, TERMS_BRANCH_CSV, TERMS_CHAIN_CSV, THEMES_BRANCH_CSV,
+                    COMPLAINTS_DIR, TERMS_BRANCH_CSV, TERMS_CHAIN_CSV, THEMES_BRANCH_CSV,
                     TOP_N_BRANCH, TOP_N_CHAIN)
 from text_prep import NEGATIONS, normalize, tokenize
 
@@ -263,7 +263,7 @@ def main():
     print(priorities.head(10)[["Branch", "n_complaints", "top_issue_1", "top_issue_1_lift",
                                "top_issue_2", "top_issue_2_lift"]]
           .to_string(index=False, float_format=lambda v: f"{v:.2f}"))
-    print(f"\nSaved to {OUTPUT_DIR}: complaint_terms_chain.csv, complaint_terms_branch.csv, "
+    print(f"\nSaved to {COMPLAINTS_DIR}: complaint_terms_chain.csv, complaint_terms_branch.csv, "
           "complaint_themes_branch.csv, branch_priorities.csv")
 
 
