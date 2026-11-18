@@ -15,6 +15,10 @@ RESTOS_FILE = "ph_restos_2025.csv"
 REVIEWS_FILE = "ph_reviews_2025.csv"
 LEGACY_RESTOS_FILE = "restos.csv"
 RAW_FILES = (RESTOS_FILE, REVIEWS_FILE, LEGACY_RESTOS_FILE)
+# Chen & Skiena (2014) "Sentiment Lexicons for 81 Languages" (Kaggle), Tagalog lists.
+LEXICON_DIR = PROJECT_DIR / "81_lang_lexicon" / "sentiment-lexicons"
+TL_POSITIVE_FILE = LEXICON_DIR / "positive_words_tl.txt"
+TL_NEGATIVE_FILE = LEXICON_DIR / "negative_words_tl.txt"
 
 # ---------------------------------------------------------------- project
 BRAND = "Jollibee"

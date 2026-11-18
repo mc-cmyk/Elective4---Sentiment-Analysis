@@ -5,6 +5,7 @@ Candidates, all scored on the same folds:
   * word+char TF-IDF x 3 models                  (extra experiment, reported only;
                                                   from Train_Sentiment.py)
   * AFINN lexicon baseline                       (train_grid.py)
+  * AFINN + Tagalog lexicon baseline             (Chen & Skiena 2014, unedited)
   * majority-class baseline
 Every vectorizer lives inside the Pipeline and is rebuilt for every fold, so
 vocabulary and IDF are learned from the training fold only. Identical texts
@@ -19,6 +20,7 @@ Outputs: output/04_training/cv_results.csv, best_model.joblib, best_config.json
 Run: python 04_train_experiments.py
 """
 import json
+import re
 import time
 from functools import partial
 
@@ -37,8 +39,8 @@ from sklearn.svm import LinearSVC
 
 from config import (BEST_CONFIG_JSON, BEST_MODEL_PATH, CHAR_MIN_DF, CHAR_NGRAM,
                     CV_RESULTS_CSV, LABELS, LR_C, LR_MAX_ITER, N_FOLDS, NB_ALPHA,
-                    NGRAM_RANGES, SEED, SVC_C, TRAIN_CSV, WC_LR_C, WC_NB_ALPHA,
-                    WC_SVC_C, WORD_MIN_DF, WORD_NGRAM)
+                    NGRAM_RANGES, SEED, SVC_C, TL_NEGATIVE_FILE, TL_POSITIVE_FILE,
+                    TRAIN_CSV, WC_LR_C, WC_NB_ALPHA, WC_SVC_C, WORD_MIN_DF, WORD_NGRAM)
 from text_prep import normalize, tokenize
 
 VECTORIZERS = {"CountVectorizer": CountVectorizer, "TfidfVectorizer": TfidfVectorizer}
@@ -57,13 +59,17 @@ WORD_CHAR_MODELS = {
     "LinearSVC": lambda: LinearSVC(class_weight="balanced", C=WC_SVC_C, random_state=SEED),
 }
 AFINN_NAME = "AFINN lexicon (baseline)"
+TL_LEXICON_NAME = "AFINN + Tagalog lexicon (baseline)"
 MAJORITY_NAME = "Majority class (baseline)"
-BASELINES = {AFINN_NAME, MAJORITY_NAME}
+BASELINES = {AFINN_NAME, TL_LEXICON_NAME, MAJORITY_NAME}
 # Word+Char rows go beyond the 24-configuration grid in the proposal: they are
 # scored and reported, but the final model is picked from the proposed grid.
 EXTRA_NOTE = "extra experiment (outside the proposed 24-configuration grid)"
-AFINN_NOTE = ("AFINN is an English-only lexicon; Tagalog/Bisaya/Taglish words "
+AFINN_NOTE = ("AFINN is an English-only lexicon; Tagalog/Taglish words "
               "are unknown to it, so it under-performs on this dataset.")
+TL_LEXICON_NOTE = ("AFINN plus the Chen & Skiena (2014) Tagalog lexicon, used unedited "
+                   "(+1 positive / -1 negative word). The Tagalog list is machine-built "
+                   "and noisy (e.g. 'pagkain' = positive, 'din' = negative).")
 
 
 def build_pipeline(vec_name, ngram, model_name):
@@ -132,17 +138,38 @@ def summarize(name, fold_rows, fit_seconds, **meta):
     return row
 
 
-class AfinnClassifier:
-    """Sum of AFINN word scores: >0 Positive, <0 Negative, 0 Neutral."""
+def read_word_list(path):
+    return {w.strip().lower() for w in path.read_text(encoding="utf-8").splitlines() if w.strip()}
 
-    def __init__(self):
+
+class AfinnClassifier:
+    """Sum of word scores: >0 Positive, <0 Negative, 0 Neutral.
+
+    AFINN scores the English words. With tagalog=True, each word in the Tagalog
+    positive/negative list adds +1/-1, unless AFINN already scores it (the
+    Tagalog list contains some English words, e.g. "top", "right")."""
+
+    _WORD_RE = re.compile(r"[a-zñ]+")
+
+    def __init__(self, tagalog=False):
         self.afinn = Afinn(language="en", emoticons=False)
+        self.tl_pos = read_word_list(TL_POSITIVE_FILE) if tagalog else set()
+        self.tl_neg = read_word_list(TL_NEGATIVE_FILE) if tagalog else set()
+
+    def _tagalog_hits(self, norm):
+        words = [w for w in self._WORD_RE.findall(norm) if w not in self.afinn._dict]
+        return [1 for w in words if w in self.tl_pos] + [-1 for w in words if w in self.tl_neg]
+
+    def score(self, text):
+        norm = normalize(text)
+        return self.afinn.score(norm) + sum(self._tagalog_hits(norm))
 
     def predict(self, texts):
-        return np.array([self._label(self.afinn.score(normalize(t))) for t in texts])
+        return np.array([self._label(self.score(t)) for t in texts])
 
     def n_without_known_words(self, texts):
-        return sum(1 for t in texts if not self.afinn.find_all(normalize(t)))
+        return sum(1 for t in texts
+                   if not self.afinn.find_all(normalize(t)) and not self._tagalog_hits(normalize(t)))
 
     @staticmethod
     def _label(score):
@@ -150,7 +177,7 @@ class AfinnClassifier:
 
 
 def run_candidates(configs, X, y, folds):
-    rows, total = [], len(configs) + 1  # +1 for AFINN
+    rows, total = [], len(configs) + 2  # +2 for the two lexicon baselines
     for i, (name, (meta, make)) in enumerate(configs.items(), 1):
         start, fold_rows = time.perf_counter(), []
         for train_idx, val_idx in folds:
@@ -166,17 +193,19 @@ def run_candidates(configs, X, y, folds):
     return rows
 
 
-def run_afinn(X, y, folds, total):
-    afinn = AfinnClassifier()
+def run_lexicon(X, y, folds, i, total, tagalog=False):
+    lex = AfinnClassifier(tagalog=tagalog)
+    name = TL_LEXICON_NAME if tagalog else AFINN_NAME
     start, fold_rows = time.perf_counter(), []
     for _, val_idx in folds:  # nothing to fit; score the same validation folds
-        fold_rows.append(fold_scores(y[val_idx], afinn.predict(X[val_idx])))
-    row = summarize(AFINN_NAME, fold_rows, time.perf_counter() - start,
-                    vectorizer="AFINN lexicon", ngram_range="(1, 1)",
-                    model="AFINN word-score sum", note=AFINN_NOTE)
-    stats = {"zero_score_total": int(sum(afinn.afinn.score(normalize(t)) == 0 for t in X)),
-             "zero_no_known_words": afinn.n_without_known_words(X), "n": len(X)}
-    print(f"  [{total:2d}/{total}] {AFINN_NAME:<55} macro-F1 "
+        fold_rows.append(fold_scores(y[val_idx], lex.predict(X[val_idx])))
+    row = summarize(name, fold_rows, time.perf_counter() - start,
+                    vectorizer="AFINN + Tagalog lexicon" if tagalog else "AFINN lexicon",
+                    ngram_range="(1, 1)", model="word-score sum",
+                    note=TL_LEXICON_NOTE if tagalog else AFINN_NOTE)
+    stats = {"zero_score_total": int(sum(lex.score(t) == 0 for t in X)),
+             "zero_no_known_words": lex.n_without_known_words(X), "n": len(X)}
+    print(f"  [{i:2d}/{total}] {name:<55} macro-F1 "
           f"{row['macro_f1_mean']:.3f} ± {row['macro_f1_std']:.3f}")
     return row, stats
 
@@ -193,8 +222,10 @@ def main():
     configs = candidates()
     print(f"Experiments - {len(X):,} training reviews, {N_FOLDS}-fold stratified CV\n")
     rows = run_candidates(configs, X, y, folds)
-    afinn_row, afinn_stats = run_afinn(X, y, folds, len(configs) + 1)
-    rows.append(afinn_row)
+    total = len(configs) + 2
+    afinn_row, afinn_stats = run_lexicon(X, y, folds, total - 1, total)
+    tl_row, tl_stats = run_lexicon(X, y, folds, total, total, tagalog=True)
+    rows += [afinn_row, tl_row]
 
     cv = pd.DataFrame(rows).sort_values("macro_f1_mean", ascending=False).reset_index(drop=True)
     cv.insert(0, "rank", range(1, len(cv) + 1))
@@ -217,6 +248,7 @@ def main():
         "cv_macro_recall_mean": float(best["macro_recall_mean"]),
         "selection": "best macro-F1 within the proposed 24-configuration grid",
         "afinn": {**afinn_stats, "note": AFINN_NOTE},
+        "afinn_tagalog": {**tl_stats, "note": TL_LEXICON_NOTE},
         "n_train": len(X), "cv_folds": N_FOLDS, "seed": SEED,
     }, indent=2), encoding="utf-8")
 
@@ -241,6 +273,8 @@ def main():
           f"macro-F1 {wc['macro_f1_mean']:.3f} ± {wc['macro_f1_std']:.3f}")
     print(f"AFINN baseline: {afinn_stats['zero_score_total']:,} of {afinn_stats['n']:,} training "
           f"reviews scored 0 (-> Neutral); {afinn_stats['zero_no_known_words']:,} contain no AFINN word.")
+    print(f"AFINN + Tagalog: {tl_stats['zero_score_total']:,} scored 0; "
+          f"{tl_stats['zero_no_known_words']:,} contain no word from either lexicon.")
     print(f"Saved: {CV_RESULTS_CSV.name}, {BEST_MODEL_PATH.name}, {BEST_CONFIG_JSON.name}")
 
 

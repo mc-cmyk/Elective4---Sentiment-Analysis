@@ -5,8 +5,9 @@ Jollibee branch managers, who need to know which branches get negative reviews
 and what those complaints are about, so they can fix the right problem first.
 
 ## Objectives
-1. **Preprocessing:** normalize English, Tagalog, Bisaya and Taglish review text
-   without stemming, and keep negations ("hindi", "wala", "dili", "not") and emoji.
+1. **Preprocessing:** normalize English, Tagalog and Taglish review text (Bisaya
+   reviews are out of scope and dropped) without stemming, and keep negations
+   ("hindi", "wala", "not") and emoji.
 2. **Sentiment classification:** label each review Negative, Neutral or Positive
    from its text.
 3. **Complaint extraction:** find the terms and themes behind branch-attributable
@@ -41,7 +42,8 @@ python 02_build_dataset.py       # Jollibee filter, labels, drop Bisaya + near-d
 python 02b_label_check.py        # 1st run: writes a 99-review sheet to label by hand;
                                  # run again once filled: agreement + Cohen's kappa
 python 03_split.py               # stratified 80/20 split, identical texts kept on one side
-python 04_train_experiments.py   # 24-config proposed grid (+3 extra word+char, AFINN, majority)
+python 04_train_experiments.py   # 24-config proposed grid (+3 extra word+char, AFINN,
+                                 # AFINN+Tagalog lexicon, majority baselines)
                                  # final model = best macro-F1 of the 24 (~2 min)
 python 05_evaluate.py            # held-out test metrics
 python 06_extract_complaints.py  # complaint terms, themes, branch priorities

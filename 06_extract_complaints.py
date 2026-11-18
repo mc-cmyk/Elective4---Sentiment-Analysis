@@ -43,15 +43,15 @@ THEMES = {
     "MISSING_ITEM": r"""
         \bmissing\b | \bkulang\b | \bincomplete\b | \black(ing)?\b
         | \bforg[eo]t | \bnakalimutan | \bnaiwan
-        | \b(kuwang|kuwangan|kulangan|kompletohin|kumpleto)
-        | \bwala\b | \bwala\s+(po|man|nga)\b | \bwalay\b
-        | \b(no|walang?|wla|walay|wa)\s+(po(ng)?\s+|yung\s+|ung\s+|man\s+lang\s+|pang?\s+|na\s+|syay\s+)?""" + ITEMS + r"""
+        | \b(kulangan|kompletohin|kumpleto)
+        | \bwala\b | \bwala\s+(po|man|nga)\b
+        | \b(no|walang?|wla)\s+(po(ng)?\s+|yung\s+|ung\s+|man\s+lang\s+|pang?\s+|na\s+)?""" + ITEMS + r"""
         | \b(doesn'?t|don'?t|didn'?t)\s+have\s+(any\s+|my\s+)?""" + ITEMS + r"""
         | \bonly\s+(\d+|one|two|three)\b | \bonly\s+(got|received|delivered|arrived|came)
-        | \b(\d+|isa|usa)\s*(pcs?\s+)?(lang|ra)\b
+        | \b(\d+|isa)\s*(pcs?\s+)?lang\b
         | \b(weren'?t|wasn'?t|not)\s+(been\s+)?includ | \bno\s+cutlery
         | \b(hindi|di|d|wala)\s+(po\s+)?(kasama|kasali|sinama|naisama)
-        | \b(wala|hindi|di|d)\b.{0,25}\b(recieve|receive|natanggap|nadawat)
+        | \b(wala|hindi|di|d)\b.{0,25}\b(recieve|receive|natanggap)
         | \b(didn'?t|did\s+not|never)\s+(receive|include|give|get|come|arrive)
         | \bnot\s+(included|received|delivered|complete)\b
         | \b(hindi|di|wala)\s+(dumating|nakarating|naibigay|binigay|kasama|sinama|nilagay)
@@ -66,11 +66,11 @@ THEMES = {
         | \bignored?\s+(my\s+|the\s+|our\s+)?(request|instruction|note)
         | \brequest(ed)?\b.{0,40}\b(but|pero|yet|instead)\b
         | \binstructions?\b.{0,20}\b(not|ignored|wasn'?t)\b | \bincorrect\b
-        | \b(request|requested|requesting|noted?|notes|asked\s+for|specifically|sabi\s+ko|ingnan)\b
+        | \b(request|requested|requesting|noted?|notes|asked\s+for|specifically|sabi\s+ko)\b
         | \b(thighs?|breast|legs?|drumsticks?|paa|pecho|petcho)\b
         | \biba\s+(ang|yung|ung|pinadala|binigay|na)\b
         | \b(i|we)\s+ordered\b.{0,40}\b(but|pero)\b.{0,30}
-          \b(received|got|gave|served|sent|delivered|dumating|binigay|pinadala|niabot)
+          \b(received|got|gave|served|sent|delivered|dumating|binigay|pinadala)
         | \b(you|they)\s+(served|sent|gave)\b
     """,
     "LATE_DELIVERY": r"""
@@ -79,14 +79,14 @@ THEMES = {
         | \b(an?|one|two|three|\d+)\s*(hours?|hrs?|oras)\b | \bhours?\b
         | \bslow\b | \bsluggish\b
         | \b(ang\s*|an|napaka|sobrang\s*)?tagal\b | \bmatagal\b | \bnatagalan\b
-        | \bmabagal\b | \bbagal\b | \bdugay\b | \bdugaya\b | \bhinay\b
+        | \bmabagal\b | \bbagal\b
         | \bpinaghintay | \bhintay | \b\d+\s*(mins?|minutes)\b | \bminutes\b
         | \bto+\s+lo+ng\b | \btoo\s+much\s+time\b | \btook\s+time\b
         | \blong(er)?\s+(than|prep|preparing)\b | \bestimated\s+time\b
     """,
     "COLD_FOOD": r"""
-        \bcold\b | \bmalamig\b | \blamig\b | \bbugnaw\b | \btugnaw\b
-        | \b(not|hindi|di|dili|wala)\s+(na\s+)?(hot|warm|mainit|init|inet)\b
+        \bcold\b | \bmalamig\b | \blamig\b
+        | \b(not|hindi|di|wala)\s+(na\s+)?(hot|warm|mainit|init|inet)\b
         | \bluke\s*warm\b | \broom\s+temp
     """,
     "FOOD_QUALITY": r"""
@@ -97,14 +97,14 @@ THEMES = {
         | \bsalty\b | \bmaalat\b | \balat\b | \bpanis | \bspoil | \bsira\b | \bsour\b
         | \bmaasim\b | \bsmell | \bmabaho\b | \bbaho\b | \bnot\s+fresh\b | \breheat
         | \btast(e|es|ed|y)\s+(bad|weird|off|old|funny|different|awful|terrible)
-        | \b(pangit|panget)\s+(ng\s+|ang\s+)?lasa | \b(di|dili|walay)\s+lami
+        | \b(pangit|panget)\s+(ng\s+|ang\s+)?lasa
         | \b(not|hindi|di)\s+(tasty|delicious|masarap|crispy|crunchy|malutong)
         | \brancid\b | \bwatery\b | \bbulok\b | \bexpired\b | \bweeks?\s+old\b
         | \bdisgusting\b | \bgross\b | \byuck | \bkadiri\b | \bnot\s+cooked
     """,
     "SMALL_PORTION": r"""
         \bsmall(er|est)?\b | \btiny\b | \bliit\b | \bmaliit\b | \bnapakaliit\b
-        | \bapakaliit\b | \bang\s*liit\b | \bsobrang\s+(ma)?liit\b | \bgamay\b | \bkagamay\b | \bkonti\b
+        | \bapakaliit\b | \bang\s*liit\b | \bsobrang\s+(ma)?liit\b | \bkonti\b
         | \bkaunti\b | \bonti\b | \bdiet\s+size\b | \bpayat\b | \bportions?\b
         | \bserving\b | \bskinny\b | \bthin\b | \bquantity\b
         | \b(back|ribs?|wings?|pakpak|likod)\s+part | \bpuro\s+(back|pakpak|wings?|likod|ribs?|buto|bones?)

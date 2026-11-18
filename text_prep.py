@@ -8,7 +8,8 @@ Design notes
 - No stemming: Porter rules strip English suffixes and mangle Tagalog affixes
   (na-, ma-, pag-), merging unrelated words.
 - Negation words are never removed, even if a stopword list contains them,
-  because "not good" / "hindi masarap" / "dili lami" flip polarity.
+  because "not good" / "hindi masarap" flip polarity.
+- Scope is English and Tagalog/Taglish; Bisaya reviews are dropped in step 02.
 - Emoji are kept as their own tokens; they carry a lot of sentiment in short
   reviews.
 """
@@ -20,7 +21,6 @@ NEGATIONS = frozenset({
     # Required by the project spec
     "not", "no", "never", "nothing", "without",
     "hindi", "di", "wala", "walang", "huwag", "wag",
-    "dili", "way", "wa", "walay",
     # English negators that sklearn's stopword list would otherwise drop
     "nor", "none", "nobody", "neither", "nowhere", "cannot", "cant",
     "dont", "didnt", "doesnt", "isnt", "wasnt", "werent", "wont", "arent",
@@ -39,19 +39,7 @@ TAGALOG_STOPWORDS = {
     "ung", "un", "ito", "itong", "yang", "yong", "ngayon", "lahat",
 }
 
-BISAYA_STOPWORDS = {
-    "ang", "sa", "og", "ug", "nga", "ni", "si", "ko", "ka", "siya", "sila",
-    "kami", "mi", "ta", "kita", "ato", "amo", "ila", "iya", "nako", "nimo",
-    "niya", "ako", "imo", "akong", "imong", "iyang", "kay", "kaayo", "kaau",
-    "kaayu", "man", "pud", "sad", "sab", "lang", "ra", "na", "pa", "diri",
-    "didto", "ana", "kani", "kana", "kadto", "mao", "bitaw", "gyud", "jud",
-    "gud", "bya", "ba", "dayon", "gani", "pero", "kung", "para", "ning",
-    "kini", "kanang", "ani", "nya", "unya",
-}
-
-STOPWORDS = frozenset(
-    (set(ENGLISH_STOP_WORDS) | TAGALOG_STOPWORDS | BISAYA_STOPWORDS) - NEGATIONS
-)
+STOPWORDS = frozenset((set(ENGLISH_STOP_WORDS) | TAGALOG_STOPWORDS) - NEGATIONS)
 
 _URL_RE = re.compile(r"https?://\S+|www\.\S+")
 _REPEAT_RE = re.compile(r"(.)\1{2,}")
