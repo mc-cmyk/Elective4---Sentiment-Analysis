@@ -64,24 +64,6 @@
     "label": "Negative",
     "accuracy": 0.4864864864864865
   },
-  "short_vs_long_accuracy": {
-    "short": {
-      "n": 232,
-      "accuracy": 0.875
-    },
-    "long": {
-      "n": 1026,
-      "accuracy": 0.7280701754385965
-    }
-  },
-  "seen_in_train_accuracy": {
-    "seen": {
-      "n": 0,
-      "accuracy": null
-    },
-    "unseen": {
-      "n": 1258,
-      "accuracy": 0.7551669316375199
-    }
-  }
+  "short_accuracy": 0.875,
+  "long_accuracy": 0.7280701754385965
 }

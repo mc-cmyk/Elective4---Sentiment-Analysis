@@ -3,23 +3,23 @@
   "vectorizer": "TfidfVectorizer",
   "ngram_range": "(1, 3)",
   "model": "LogisticRegression",
+  "selection": "best macro-F1 within the proposed 24-configuration grid",
   "cv_macro_f1_mean": 0.620551838373453,
   "cv_macro_f1_std": 0.012526134964450167,
-  "cv_accuracy_mean": 0.7546190572601877,
   "cv_macro_precision_mean": 0.6298907984450686,
   "cv_macro_recall_mean": 0.6174921952039251,
-  "selection": "best macro-F1 within the proposed 24-configuration grid",
-  "afinn": {
-    "zero_score_total": 2521,
-    "zero_no_known_words": 2460,
-    "n": 5029,
-    "note": "AFINN is an English-only lexicon; Tagalog/Taglish words are unknown to it, so it under-performs on this dataset."
-  },
-  "afinn_tagalog": {
-    "zero_score_total": 1670,
-    "zero_no_known_words": 1505,
-    "n": 5029,
-    "note": "AFINN plus the Chen & Skiena (2014) Tagalog lexicon, used unedited (+1 positive / -1 negative word). The Tagalog list is machine-built and noisy (e.g. 'pagkain' = positive, 'din' = negative)."
+  "cv_accuracy_mean": 0.7546190572601877,
+  "lexicon_baselines": {
+    "AFINN lexicon (baseline)": {
+      "zero_score": 2521,
+      "no_known_words": 2460,
+      "n": 5029
+    },
+    "AFINN + Tagalog lexicon (baseline)": {
+      "zero_score": 1670,
+      "no_known_words": 1505,
+      "n": 5029
+    }
   },
   "n_train": 5029,
   "cv_folds": 5,
